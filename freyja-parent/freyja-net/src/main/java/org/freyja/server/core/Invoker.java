@@ -50,6 +50,9 @@ public class Invoker {
 	private ApplicationContext context;
 
 	Map<Class<?>, BeanInvoker<?>> invokerMap = new HashMap<Class<?>, BeanInvoker<?>>();
+	
+	/** 参数命名不能重复 */
+	Map<String, BeanInvoker<?>> invokerNameMap = new HashMap<String, BeanInvoker<?>>();
 
 	private static final Logger logger = LoggerFactory.getLogger(Invoker.class);
 
@@ -69,6 +72,8 @@ public class Invoker {
 				Class<?> entityClass = (Class<?>) ((ParameterizedType) t)
 						.getActualTypeArguments()[0];
 				invokerMap.put(entityClass, invoker);
+
+				invokerNameMap.put(invoker.getName(), invoker);
 			} catch (Exception e) {
 				logger.error("BeanInvoker实现类写法不合法，请按照标准编写。例如：public class UserInvoker implements BeanInvoker<User>");
 				e.printStackTrace();
@@ -151,7 +156,11 @@ public class Invoker {
 		if (request.getBytes().length > 0) {
 			req = requestInvoker.invoke();
 			Schema schema = RuntimeSchema.getSchema(req.getClass());
-			ProtobufIOUtil.mergeFrom(request.getBytes(), req, schema);
+			try {
+				ProtobufIOUtil.mergeFrom(request.getBytes(), req, schema);
+			} catch (Exception e) {
+				logger.error("请求字符不是probuf编码字符," + e.getMessage(), e);
+			}
 		}
 
 		if (Log.reqLogger.isDebugEnabled()) {
@@ -167,13 +176,27 @@ public class Invoker {
 
 		List<String> names = bo.getList();
 
-		for (BeanInvoker invoker : invokerMap.values()) {
-			String name = invoker.getName();
-			if (!names.contains("#" + name)) {
+		// for (BeanInvoker invoker : invokerMap.values()) {
+		// String name = invoker.getName();
+		// if (!names.contains("#" + name)) {
+		// continue;
+		// }
+		// Object obj = invoker.invoke(uid, session);
+		// context.setVariable(name, obj);
+		// }
+
+		for (String name : names) {
+			if (!name.startsWith("#")) {
 				continue;
 			}
+			String invokerName = name.substring(1, name.length());
+			BeanInvoker invoker = invokerNameMap.get(invokerName);
+			if (invoker == null) {
+				continue;
+			}
+
 			Object obj = invoker.invoke(uid, session);
-			context.setVariable(name, obj);
+			context.setVariable(invokerName, obj);
 		}
 
 		Object[] args = expression.getValue(context, Object[].class);
@@ -245,7 +268,6 @@ public class Invoker {
 
 					names[i] = "#" + name;
 					break;
-					// System.out.println(name);
 				}
 			}
 
