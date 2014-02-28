@@ -42,6 +42,7 @@ import com.alibaba.fastjson.JSON;
 import com.dyuproject.protostuff.ProtobufIOUtil;
 import com.dyuproject.protostuff.Schema;
 import com.dyuproject.protostuff.runtime.RuntimeSchema;
+import com.dyuproject.protostuff.runtime.WmsRuntimeSchema;
 
 @Component
 public class Invoker {
@@ -155,7 +156,8 @@ public class Invoker {
 		Object req = null;
 		if (request.getBytes().length > 0) {
 			req = requestInvoker.invoke();
-			Schema schema = RuntimeSchema.getSchema(req.getClass());
+			Schema schema = WmsRuntimeSchema.getSchema(req.getClass());
+//			Schema schema =RuntimeSchema.getSchema(req.getClass());
 			try {
 				ProtobufIOUtil.mergeFrom(request.getBytes(), req, schema);
 			} catch (Exception e) {

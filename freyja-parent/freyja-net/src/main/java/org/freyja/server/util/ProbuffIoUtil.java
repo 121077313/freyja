@@ -9,6 +9,7 @@ import com.dyuproject.protostuff.LinkedBuffer;
 import com.dyuproject.protostuff.ProtobufIOUtil;
 import com.dyuproject.protostuff.Schema;
 import com.dyuproject.protostuff.runtime.RuntimeSchema;
+import com.dyuproject.protostuff.runtime.WmsRuntimeSchema;
 
 public class ProbuffIoUtil {
 
@@ -29,8 +30,12 @@ public class ProbuffIoUtil {
 
 		}
 
-		Schema schema = RuntimeSchema
+		Schema schema = WmsRuntimeSchema
 				.getSchema(response.getResult().getClass());
+		
+//		Schema schema = RuntimeSchema
+//				.getSchema(response.getResult().getClass());
+		
 		LinkedBuffer buffer = LinkedBuffer.allocate(2048);
 		byte[] body = null;
 		try {

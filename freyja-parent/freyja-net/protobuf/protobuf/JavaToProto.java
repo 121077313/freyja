@@ -8,10 +8,15 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
@@ -20,6 +25,7 @@ import org.freyja.server.annotation.Proto;
 
 import com.dyuproject.protostuff.Schema;
 import com.dyuproject.protostuff.runtime.RuntimeSchema;
+import com.dyuproject.protostuff.runtime.WmsRuntimeSchema;
 
 public class JavaToProto {
 
@@ -242,7 +248,10 @@ public class JavaToProto {
 
 	private void parseFromSchemaFields() {
 
-		RuntimeSchema<Object> schema = (RuntimeSchema<Object>) RuntimeSchema
+		// RuntimeSchema<Object> schema = (RuntimeSchema<Object>) RuntimeSchema
+		// .getSchema(currentClass());
+
+		WmsRuntimeSchema schema = (WmsRuntimeSchema) WmsRuntimeSchema
 				.getSchema(currentClass());
 
 		int fieldCount = schema.getFieldCount();
@@ -455,13 +464,40 @@ public class JavaToProto {
 	}
 
 	private void processFields() {
+//		WmsRuntimeSchema schema = (WmsRuntimeSchema) WmsRuntimeSchema
+//				.getSchema(currentClass());
+//
+//		Proto proto = currentClass().getAnnotation(Proto.class);
+//
+//		for (int i = 1; i < schema.getFieldCount(); i++) {}
+
 		Field[] fields = currentClass().getDeclaredFields();
+
+		List<Field> fieldList = Arrays.asList(fields);
+
+		Collections.sort(fieldList, new Comparator<java.lang.reflect.Field>() {
+
+			@Override
+			public int compare(Field lField, Field rField) {
+
+				if (lField.getName().hashCode() > rField.getName().hashCode()) {
+					return 1;
+				} else if (lField.getName().hashCode() < rField.getName()
+						.hashCode()) {
+					return -1;
+				}
+				return 0;
+			}
+		});
 
 		int i = 0;
 
 		Proto proto = currentClass().getAnnotation(Proto.class);
 
-		for (Field f : fields) {
+		for (Field f : fieldList) {
+			
+
+
 
 			int mod = f.getModifiers();
 			if (!Modifier.isPrivate(mod)) {// 添加，只把私有属性传输
@@ -548,6 +584,10 @@ public class JavaToProto {
 			} else {
 				processField(defaultOption, typeName, f.getName(), i);
 			}
+
+		
+			
+			
 		}
 	}
 
