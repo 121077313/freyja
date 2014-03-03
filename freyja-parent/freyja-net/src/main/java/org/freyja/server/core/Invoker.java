@@ -51,7 +51,7 @@ public class Invoker {
 	private ApplicationContext context;
 
 	Map<Class<?>, BeanInvoker<?>> invokerMap = new HashMap<Class<?>, BeanInvoker<?>>();
-	
+
 	/** 参数命名不能重复 */
 	Map<String, BeanInvoker<?>> invokerNameMap = new HashMap<String, BeanInvoker<?>>();
 
@@ -156,8 +156,14 @@ public class Invoker {
 		Object req = null;
 		if (request.getBytes().length > 0) {
 			req = requestInvoker.invoke();
-			Schema schema = WmsRuntimeSchema.getSchema(req.getClass());
-//			Schema schema =RuntimeSchema.getSchema(req.getClass());
+
+			Schema schema = null;
+			if (config.protobufOrder) {
+				schema = WmsRuntimeSchema.getSchema(req.getClass());
+			} else {
+				schema = RuntimeSchema.getSchema(req.getClass());
+			}
+
 			try {
 				ProtobufIOUtil.mergeFrom(request.getBytes(), req, schema);
 			} catch (Exception e) {

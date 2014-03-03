@@ -15,6 +15,12 @@ public class ResponseProtobufEncoder extends ProtocolEncoderAdapter {
 
 	Map<String, byte[]> buffCache = new ConcurrentHashMap<String, byte[]>();
 
+	boolean protobufOrder;
+
+	public ResponseProtobufEncoder(boolean protobufOrder) {
+		this.protobufOrder = protobufOrder;
+	}
+
 	@Override
 	public void encode(IoSession session, Object message,
 			ProtocolEncoderOutput out) throws Exception {
@@ -32,7 +38,7 @@ public class ResponseProtobufEncoder extends ProtocolEncoderAdapter {
 			}
 
 			if (bytes == null) {
-				bytes = ProbuffIoUtil.toBytes(command);
+				bytes = ProbuffIoUtil.toBytes(command, protobufOrder);
 
 				if (key != null) {
 					buffCache.put(key, bytes);
@@ -48,10 +54,8 @@ public class ResponseProtobufEncoder extends ProtocolEncoderAdapter {
 		buf.putInt(bytes.length);
 		buf.put(bytes);
 		buf.flip();
-		
-		
-//System.out.println("字节长度"+bytes.length + 4);
 
+		// System.out.println("字节长度"+bytes.length + 4);
 
 		out.write(buf);
 	}

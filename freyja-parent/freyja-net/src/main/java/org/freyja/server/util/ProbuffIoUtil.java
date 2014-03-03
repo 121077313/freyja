@@ -17,7 +17,7 @@ public class ProbuffIoUtil {
 			.getLogger(ProbuffIoUtil.class);
 
 	/** 响应转换成字节数组 */
-	public static byte[] toBytes(Response response) {
+	public static byte[] toBytes(Response response, boolean protobufOrder) {
 
 		if (response.getResult() == null) {
 			IoBuffer buf = IoBuffer.allocate(8);
@@ -29,13 +29,14 @@ public class ProbuffIoUtil {
 			return bytes;
 
 		}
+		Schema schema;
+		if (protobufOrder) {
+			schema = WmsRuntimeSchema
+					.getSchema(response.getResult().getClass());
+		} else {
+			schema = RuntimeSchema.getSchema(response.getResult().getClass());
+		}
 
-		Schema schema = WmsRuntimeSchema
-				.getSchema(response.getResult().getClass());
-		
-//		Schema schema = RuntimeSchema
-//				.getSchema(response.getResult().getClass());
-		
 		LinkedBuffer buffer = LinkedBuffer.allocate(2048);
 		byte[] body = null;
 		try {

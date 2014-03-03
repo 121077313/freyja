@@ -87,7 +87,7 @@ public class MINAServer {
 		}
 
 		if (config.responseUseProtobuf) {
-			encoder = new ResponseProtobufEncoder();
+			encoder = new ResponseProtobufEncoder(config.protobufOrder);
 		} else {// json
 			encoder = new ResponseJsonEncoder();
 		}

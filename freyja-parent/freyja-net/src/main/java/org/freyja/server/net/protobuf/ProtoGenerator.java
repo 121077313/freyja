@@ -8,6 +8,7 @@ import javax.annotation.PostConstruct;
 
 import org.apache.commons.io.FileUtils;
 import org.freyja.server.annotation.GameVO;
+import org.freyja.server.core.Config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -27,10 +28,13 @@ public class ProtoGenerator {
 	@Autowired
 	private ApplicationContext context;
 
+	@Autowired
+	Config config;
+
 	@PostConstruct
 	public void init() {
 		createOneFile();
-//		writeCmdToFile();
+		// writeCmdToFile();
 	}
 
 	private void createOneFile() {
@@ -57,7 +61,7 @@ public class ProtoGenerator {
 		for (String serverName : vos.keySet()) {
 			Object obj = context.getBean(serverName);
 			Class<?> clazz = obj.getClass();
-			JavaToProto jpt = new JavaToProto(clazz);
+			JavaToProto jpt = new JavaToProto(clazz, config.protobufOrder);
 			try {
 				String protoFile = jpt.toString();
 

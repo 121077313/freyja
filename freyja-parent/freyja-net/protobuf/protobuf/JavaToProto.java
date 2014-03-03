@@ -29,6 +29,9 @@ import com.dyuproject.protostuff.runtime.WmsRuntimeSchema;
 
 public class JavaToProto {
 
+	/** 是否对probuf字段进行排序 */
+	private boolean order;
+
 	private static String NAME = "pojo To Proto file";
 	private static String VERSION = "v0.2";
 
@@ -79,7 +82,7 @@ public class JavaToProto {
 			return;
 		}
 
-		JavaToProto jtp = new JavaToProto(clazz);
+		JavaToProto jtp = new JavaToProto(clazz, false);
 
 		String protoFile = jtp.toString();
 
@@ -113,16 +116,13 @@ public class JavaToProto {
 	 * @param classToProcess
 	 *            - The Class to be Processed - MUST NOT BE NULL!
 	 */
-	public JavaToProto(Class<?> classToProcess) {
+	public JavaToProto(Class<?> classToProcess, boolean order) {
 		if (classToProcess == null) {
 			throw new RuntimeException(
 					"You gave me a null class to process. This cannot be done, please pass in an instance of Class");
 		}
+		this.order = order;
 		classStack.push(classToProcess);
-	}
-
-	public JavaToProto(Schema<Class<?>> schema) {
-
 	}
 
 	// region Helper Functions
@@ -142,7 +142,7 @@ public class JavaToProto {
 
 		public void registery(Class<?> classToProcess) {
 
-			allProto.put(classToProcess, new JavaToProto(classToProcess));
+			allProto.put(classToProcess, new JavaToProto(classToProcess, false));
 		}
 
 		public void flush() {
@@ -184,7 +184,7 @@ public class JavaToProto {
 		private HashMap<Class<?>, JavaToProto> allProto = new LinkedHashMap<Class<?>, JavaToProto>();
 
 		public void registery(Class<?> classToProcess) {
-			allProto.put(classToProcess, new JavaToProto(classToProcess));
+			allProto.put(classToProcess, new JavaToProto(classToProcess, false));
 		}
 
 		public void flush() {
@@ -246,12 +246,109 @@ public class JavaToProto {
 
 	}
 
-	private void parseFromSchemaFields() {
-
-		// RuntimeSchema<Object> schema = (RuntimeSchema<Object>) RuntimeSchema
-		// .getSchema(currentClass());
+	void orderParseFromSchemaFields() {
 
 		WmsRuntimeSchema schema = (WmsRuntimeSchema) WmsRuntimeSchema
+				.getSchema(currentClass());
+
+		int fieldCount = schema.getFieldCount();
+		for (int i = 1; i < fieldCount; i++) {
+
+			String name = schema.getFieldName(i);
+
+			Field f = null;
+			try {
+				f = currentClass().getField(name);
+			} catch (NoSuchFieldException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (SecurityException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			if (null == f)
+				continue;
+			int mod = f.getModifiers();
+			if (!Modifier.isPrivate(mod)) {// 添加，只把私有属性传输
+				// Skip not private field
+				continue;
+			}
+
+			i++;
+
+			if (Modifier.isAbstract(mod) || Modifier.isTransient(mod)) {
+				// Skip this field
+				continue;
+			}
+
+			Class<?> fieldType = f.getType();
+
+			// Primitives or Types we have come across before
+			if (typeMap.containsKey(fieldType)) {
+				processField(OPTIONAL, typeMap.get(fieldType), f.getName(), i);
+				continue;
+			}
+
+			if (fieldType.isEnum()) {
+				processEnum(fieldType);
+				processField(REQUIRED, typeMap.get(fieldType), f.getName(), i);
+				continue;
+			}
+
+			if (Map.class.isAssignableFrom(fieldType)) {
+
+				throw new IllegalArgumentException("protobuf不支持MAP");
+
+			}
+
+			if (Date.class.isAssignableFrom(fieldType)) {
+
+				throw new IllegalArgumentException("protobuf不支持Date");
+
+			}
+
+			if (fieldType.isArray()) {
+				Class<?> innerType = fieldType.getComponentType();
+
+				if (!typeMap.containsKey(innerType)) {
+					// TODO 不提倡在proto中使用消息嵌套
+					// buildNestedType(innerType);
+				}
+				String typeName = getTypeName(innerType);
+				processField(REPEATED, typeName, f.getName(), i);
+				continue;
+			}
+
+			if (Collection.class.isAssignableFrom(fieldType)) {
+				Class<?> innerType = null;
+
+				Type t = f.getGenericType();
+
+				if (t instanceof ParameterizedType) {
+					ParameterizedType tt = (ParameterizedType) t;
+					innerType = (Class<?>) tt.getActualTypeArguments()[0];
+				}
+
+				if (!typeMap.containsKey(innerType)) {
+					// buildNestedType(innerType);
+				}
+				String typeName = getTypeName(innerType);
+				processField(REPEATED, typeName, f.getName(), i);
+				continue;
+			}
+
+			String typeName = getTypeName(fieldType);
+			processField(OPTIONAL, typeName, f.getName(), i);
+		}
+
+	}
+
+	private void parseFromSchemaFields() {
+		if (order) {
+			orderParseFromSchemaFields();
+			return;
+		}
+		RuntimeSchema<Object> schema = (RuntimeSchema<Object>) RuntimeSchema
 				.getSchema(currentClass());
 
 		int fieldCount = schema.getFieldCount();
@@ -464,40 +561,41 @@ public class JavaToProto {
 	}
 
 	private void processFields() {
-//		WmsRuntimeSchema schema = (WmsRuntimeSchema) WmsRuntimeSchema
-//				.getSchema(currentClass());
-//
-//		Proto proto = currentClass().getAnnotation(Proto.class);
-//
-//		for (int i = 1; i < schema.getFieldCount(); i++) {}
+		// WmsRuntimeSchema schema = (WmsRuntimeSchema) WmsRuntimeSchema
+		// .getSchema(currentClass());
+		//
+		// Proto proto = currentClass().getAnnotation(Proto.class);
+		//
+		// for (int i = 1; i < schema.getFieldCount(); i++) {}
 
 		Field[] fields = currentClass().getDeclaredFields();
 
 		List<Field> fieldList = Arrays.asList(fields);
 
-		Collections.sort(fieldList, new Comparator<java.lang.reflect.Field>() {
+		if (order) {
+			Collections.sort(fieldList,
+					new Comparator<java.lang.reflect.Field>() {
 
-			@Override
-			public int compare(Field lField, Field rField) {
+						@Override
+						public int compare(Field lField, Field rField) {
 
-				if (lField.getName().hashCode() > rField.getName().hashCode()) {
-					return 1;
-				} else if (lField.getName().hashCode() < rField.getName()
-						.hashCode()) {
-					return -1;
-				}
-				return 0;
-			}
-		});
+							if (lField.getName().hashCode() > rField.getName()
+									.hashCode()) {
+								return 1;
+							} else if (lField.getName().hashCode() < rField
+									.getName().hashCode()) {
+								return -1;
+							}
+							return 0;
+						}
+					});
+		}
 
 		int i = 0;
 
 		Proto proto = currentClass().getAnnotation(Proto.class);
 
 		for (Field f : fieldList) {
-			
-
-
 
 			int mod = f.getModifiers();
 			if (!Modifier.isPrivate(mod)) {// 添加，只把私有属性传输
@@ -585,9 +683,6 @@ public class JavaToProto {
 				processField(defaultOption, typeName, f.getName(), i);
 			}
 
-		
-			
-			
 		}
 	}
 
