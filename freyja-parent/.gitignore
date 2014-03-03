@@ -1,3 +1,5 @@
 /freyja-net
 /freyja-cache
 /freyja-jdbc
+/.settings
+/.project
