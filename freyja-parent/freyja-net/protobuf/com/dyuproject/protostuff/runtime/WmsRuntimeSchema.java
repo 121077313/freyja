@@ -327,33 +327,15 @@ public final class WmsRuntimeSchema<T> extends MappedSchema<T> {
 			Class<?> typeClass) {
 		if (Object.class != typeClass.getSuperclass())
 			fill(fieldMap, typeClass.getSuperclass());
-		// List<java.lang.reflect.Field> fieldList = new
-		// ArrayList<java.lang.reflect.Field>();
 
 		for (java.lang.reflect.Field f : typeClass.getDeclaredFields()) {
 			int mod = f.getModifiers();
-			if (!Modifier.isStatic(mod) && !Modifier.isTransient(mod))
-				// fieldList.add(f);
+			if (!Modifier.isStatic(mod) && !Modifier.isTransient(mod)
+					&& !f.getName().equals("serialize")) {
 				fieldMap.put(f.getName(), f);
+			}
 
 		}
-
-		// final String className = typeClass.getName();
-		//
-		// Collections.sort(fieldList,
-		// new java.util.Comparator<java.lang.reflect.Field>() {
-		//
-		// public int compare(java.lang.reflect.Field lField,
-		// java.lang.reflect.Field rField) {
-		//
-		// return lField.getName().hashCode()
-		// - rField.getName().hashCode();
-		// }
-		// });
-		//
-		// for (java.lang.reflect.Field f : fieldList) {
-		// fieldMap.put(f.getName(), f);
-		// }
 
 	}
 
