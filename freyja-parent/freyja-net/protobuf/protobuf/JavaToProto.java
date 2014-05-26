@@ -481,16 +481,16 @@ public class JavaToProto {
 
 	public Map<Class<?>, String> getPrimitivesMap() {
 		Map<Class<?>, String> results = new HashMap<Class<?>, String>();
-
+		// test isee 修改sint64为int64
 		results.put(double.class, "double");
 		results.put(float.class, "float");
 		results.put(int.class, "int32");
-		results.put(long.class, "sint64");
+		results.put(long.class, "int64");
 		results.put(boolean.class, "bool");
 		results.put(Double.class, "double");
 		results.put(Float.class, "float");
 		results.put(Integer.class, "int32");
-		results.put(Long.class, "sint64");
+		results.put(Long.class, "int64");
 		results.put(Boolean.class, "bool");
 		results.put(String.class, "string");
 		return results;

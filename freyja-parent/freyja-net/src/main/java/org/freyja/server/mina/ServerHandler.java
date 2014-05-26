@@ -129,9 +129,9 @@ public class ServerHandler extends IoHandlerAdapter {
 
 		// TODO: 本地测试,不需要crossdomain.xml文件
 		// session.write(xmls);
-		// logger.info("建立了新的连接{}, 来自：{}", session.getId(),
-		// session.getRemoteAddress());
-
+//		logger.info("建立了新的连接{}, 来自：{}", session.getId(),
+//				session.getRemoteAddress());
+		// System.out.println("opend");
 	}
 
 	@Override

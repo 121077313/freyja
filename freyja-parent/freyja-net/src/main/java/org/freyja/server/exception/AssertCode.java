@@ -16,6 +16,12 @@ public class AssertCode {
 	 */
 	public static void error(int error) {
 
+		
+//		if(1==1) {
+//			throw new CodeException(error);
+//		}
+		
+		
 		RuntimeException e = map.get(error);
 		// 缓存exception 会导致异常堆栈显示旧的
 
