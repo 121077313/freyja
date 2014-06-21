@@ -17,9 +17,9 @@ public class AssertCode {
 	public static void error(int error) {
 
 		
-//		if(1==1) {
-//			throw new CodeException(error);
-//		}
+		if(1==1) {
+			throw new CodeException(error);
+		}
 		
 		
 		RuntimeException e = map.get(error);

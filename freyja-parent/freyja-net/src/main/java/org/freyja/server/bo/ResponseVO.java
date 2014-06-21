@@ -22,7 +22,7 @@ public class ResponseVO {
 			cmdId = resp.getCmd();
 		}
 
-		if (resp.getStatus() > 0) {
+		if (resp.getStatus() != 0) {
 			s = resp.getStatus();
 		}
 

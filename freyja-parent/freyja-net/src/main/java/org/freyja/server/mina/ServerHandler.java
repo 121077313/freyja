@@ -2,15 +2,22 @@ package org.freyja.server.mina;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+
+import javax.annotation.PostConstruct;
 
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolCodecException;
 import org.freyja.log.Log;
+import org.freyja.server.bo.MessageQueue;
 import org.freyja.server.bo.MethodCache;
 import org.freyja.server.bo.ResponseVO;
 import org.freyja.server.core.CmdInit;
@@ -49,65 +56,131 @@ public class ServerHandler extends IoHandlerAdapter {
 	public static ExecutorService methodScheduler = Executors
 			.newFixedThreadPool(200, new NamedThreadFactory("method"));
 
-	@Override
-	public void messageReceived(final IoSession session, final Object message)
-			throws Exception {
+	// Queue<MessageQueue> queue = new ConcurrentLinkedQueue<MessageQueue>();
 
+	Map<Integer, Queue<MessageQueue>> queues = new ConcurrentHashMap<Integer, Queue<MessageQueue>>();
+
+	@PostConstruct
+	public void init() {
+		// 处理消息
 		methodScheduler.submit(new Runnable() {
 
 			@Override
 			public void run() {
 
-				Request request = (Request) message;
-				int code = 0;
-				Object result = null;
-				try {
+				while (true) {
+					if (queues.isEmpty()) {
+						continue;
+					}
+
+					for (final Queue<MessageQueue> queue : queues.values()) {
+						methodScheduler.submit(new Runnable() {
+							@Override
+							public void run() {
+								while (!queue.isEmpty()) {
+									final MessageQueue msg = queue.poll();
+									final IoSession session = msg
+											.getIoSession();
+									try {
+										push(session, msg.getMsg());
+									} catch (Exception e) {
+										e.printStackTrace();
+									}
+								}
+							}
+						});
+					}
 					try {
-						result = beanInvoker.dispatch(session, request);
-					} catch (InvocationTargetException e) {
-
-						Throwable throwable = e.getTargetException();
-						if (throwable instanceof Exception) {
-							throw (Exception) throwable;
-						}
-						code = ServerException.system_error;
-						errLogger.error(throwable.getMessage(), throwable);
-					} catch (IllegalArgumentException e) {
-						errLogger.error("{}找不到接口,{}", request.toString(),
-								e.getMessage());
-						AssertCode.error(ServerException.arg_error);
+						Thread.sleep(500);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
 					}
-				} catch (CodeException e) {
-					code = e.getCode();
-
-					if (code == ServerException.server_msg_no_return) {
-						return;
-					}
-				} catch (Exception e) {
-					code = ServerException.system_error;
-
-					MethodCache methodCache = CmdInit.cmdMethodCahce
-							.get(request.getCmd());
-
-					// logger.error("服务端异常:{} -> {} \n {} ", message,
-					// methodCache,
-					// getStackMsg(e));
-
-					logger.error("服务端异常:" + getStackMsg(e), e);
-					e.printStackTrace();
-					// errLogger.error(e.getMessage(), e);
 				}
-
-				Response response = RequestParseUtil.parser(request, code,
-						result);
-
-				if (Log.respLogger.isDebugEnabled()) {
-					Log.respLogger.debug("响应:"
-							+ new ResponseVO(response).toString());
-				}
-				session.write(response);
 			}
 		});
+
+	}
+
+	/** push msg */
+	public void push(final IoSession session, final Object message) {
+
+		Request request = (Request) message;
+		int code = 0;
+		Object result = null;
+		try {
+			try {
+				result = beanInvoker.dispatch(session, request);
+			} catch (InvocationTargetException e) {
+
+				Throwable throwable = e.getTargetException();
+				if (throwable instanceof Exception) {
+					throw (Exception) throwable;
+				}
+				code = ServerException.system_error;
+				errLogger.error(throwable.getMessage(), throwable);
+			} catch (IllegalArgumentException e) {
+				errLogger.error("{}找不到接口,{}", request.toString(),
+						e.getMessage());
+				AssertCode.error(ServerException.arg_error);
+			}
+		} catch (CodeException e) {
+			code = e.getCode();
+
+			if (code == ServerException.server_msg_no_return) {
+				return;
+			}
+			
+			e.printStackTrace();
+
+			logger.error("服务端异常:" + getStackMsg(e), e);
+		} catch (Exception e) {
+			code = ServerException.system_error;
+
+			MethodCache methodCache = CmdInit.cmdMethodCahce.get(request
+					.getCmd());
+
+			// logger.error("服务端异常:{} -> {} \n {} ", message,
+			// methodCache,
+			// getStackMsg(e));
+
+			logger.error("服务端异常:" + getStackMsg(e), e);
+			e.printStackTrace();
+			// errLogger.error(e.getMessage(), e);
+		}
+
+		Response response = RequestParseUtil.parser(request, code, result);
+
+		if (Log.respLogger.isDebugEnabled()) {
+			Log.respLogger.debug("响应:" + new ResponseVO(response).toString());
+		}
+		session.write(response);
+
+	}
+
+	@Override
+	public void messageReceived(final IoSession session, final Object message)
+			throws Exception {
+
+		Integer uid = (Integer) session.getAttribute("uid");
+
+		if (uid == null) {// 直接执行
+			methodScheduler.submit(new Runnable() {
+				@Override
+				public void run() {
+					push(session, message);
+				}
+			});
+		} else {
+			Queue<MessageQueue> queue = queues.get(uid);
+			if (queue == null) {
+				queue = new ConcurrentLinkedQueue<MessageQueue>();
+				queues.put(uid, queue);
+			}
+
+			MessageQueue msg = new MessageQueue(session, message);
+			queue.add(msg);
+		}
+
 	}
 
 	private static String getStackMsg(Exception e) {
@@ -129,8 +202,8 @@ public class ServerHandler extends IoHandlerAdapter {
 
 		// TODO: 本地测试,不需要crossdomain.xml文件
 		// session.write(xmls);
-//		logger.info("建立了新的连接{}, 来自：{}", session.getId(),
-//				session.getRemoteAddress());
+		// logger.info("建立了新的连接{}, 来自：{}", session.getId(),
+		// session.getRemoteAddress());
 		// System.out.println("opend");
 	}
 

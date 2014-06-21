@@ -504,6 +504,11 @@ public class JavaToProto {
 					.append(type).append(SPACE).append(name).append(SPACE)
 					.append("=").append(SPACE).append(index).append(SPACE)
 					.append(DEFAULT).append(LINE_END).append(NEWLINE);
+		} else if (type.equals("int64") && !repeated.equals(REPEATED)) {
+			builder.append(getTabs()).append(repeated).append(SPACE)
+					.append(type).append(SPACE).append(name).append(SPACE)
+					.append("=").append(SPACE).append(index).append(SPACE)
+					.append(DEFAULT).append(LINE_END).append(NEWLINE);
 		} else {
 			builder.append(getTabs()).append(repeated).append(SPACE)
 					.append(type).append(SPACE).append(name).append(SPACE)

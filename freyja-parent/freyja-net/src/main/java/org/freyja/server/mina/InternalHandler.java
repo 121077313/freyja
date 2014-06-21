@@ -46,7 +46,6 @@ public class InternalHandler extends IoHandlerAdapter {
 	@Override
 	public void messageReceived(IoSession session, Object message)
 			throws Exception {
-
 		Forward forward = JSON.parseObject(message.toString(), Forward.class);
 
 		if (forward.getCmd().equals("c")) {
