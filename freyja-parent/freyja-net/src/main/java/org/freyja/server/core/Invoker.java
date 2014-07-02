@@ -1,5 +1,6 @@
 package org.freyja.server.core;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -96,9 +97,11 @@ public class Invoker {
 
 		request.setCmdString(methodCache.getCmdString());
 
-		if (request.getBytes() != null) {// req protobuf
+		if (!config.oldReqJson) {// req protobuf
 			return dispatch(methodCache, session, request);
 		}
+
+		request.bodyFromBytes(request.getBytes());
 
 		if (Log.reqLogger.isDebugEnabled()) {
 			Log.reqLogger.debug("请求:{}", new RequestVO(request).toString());
@@ -155,20 +158,33 @@ public class Invoker {
 
 		Object req = null;
 		if (request.getBytes().length > 0) {
+
 			req = requestInvoker.invoke();
+			if (request.isJson()) {
 
-			Schema schema = null;
-			if (config.protobufOrder) {
-				schema = WmsRuntimeSchema.getSchema(req.getClass());
+				try {
+					String s = new String(request.getBytes(), "utf-8");
+
+					req = JSON.parseObject(request.getBytes(), req.getClass());
+				} catch (UnsupportedEncodingException e) {
+					e.printStackTrace();
+				}
 			} else {
-				schema = RuntimeSchema.getSchema(req.getClass());
+				Schema schema = null;
+				if (config.protobufOrder) {
+					schema = WmsRuntimeSchema.getSchema(req.getClass());
+				} else {
+					schema = RuntimeSchema.getSchema(req.getClass());
+				}
+
+				try {
+					ProtobufIOUtil.mergeFrom(request.getBytes(), req, schema);
+				} catch (Exception e) {
+					logger.error("请求字符不是probuf编码字符," + e.getMessage(), e);
+				}
+
 			}
 
-			try {
-				ProtobufIOUtil.mergeFrom(request.getBytes(), req, schema);
-			} catch (Exception e) {
-				logger.error("请求字符不是probuf编码字符," + e.getMessage(), e);
-			}
 		}
 
 		if (Log.reqLogger.isDebugEnabled()) {
@@ -231,9 +247,9 @@ public class Invoker {
 
 	@PostConstruct
 	public void scan() {
-		if (!config.requestUseProtobuf) {
-			return;
-		}
+		// if (!config.requestUseProtobuf) {
+		// return;
+		// }
 
 		Map<String, RequestInvoker> invokers = context
 				.getBeansOfType(RequestInvoker.class);
@@ -241,7 +257,8 @@ public class Invoker {
 				invokers.values());
 
 		if (reqInvokers.size() != 1) {
-			throw new RuntimeException("RequestInvoker 缺少或者过多");
+			logger.error("RequestInvoker 缺少或者过多");
+			return;
 		}
 
 		requestInvoker = reqInvokers.get(0);

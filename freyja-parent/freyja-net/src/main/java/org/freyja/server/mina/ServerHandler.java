@@ -81,10 +81,12 @@ public class ServerHandler extends IoHandlerAdapter {
 									final MessageQueue msg = queue.poll();
 									final IoSession session = msg
 											.getIoSession();
+
 									try {
 										push(session, msg.getMsg());
 									} catch (Exception e) {
 										e.printStackTrace();
+										errLogger.error(e.getMessage(), e);
 									}
 								}
 							}
@@ -129,10 +131,10 @@ public class ServerHandler extends IoHandlerAdapter {
 			if (code == ServerException.server_msg_no_return) {
 				return;
 			}
-			
-			e.printStackTrace();
 
-			logger.error("服务端异常:" + getStackMsg(e), e);
+			// e.printStackTrace();
+
+			// logger.error("服务端异常:" + getStackMsg(e), e);
 		} catch (Exception e) {
 			code = ServerException.system_error;
 
@@ -167,7 +169,11 @@ public class ServerHandler extends IoHandlerAdapter {
 			methodScheduler.submit(new Runnable() {
 				@Override
 				public void run() {
-					push(session, message);
+					try {
+						push(session, message);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 				}
 			});
 		} else {

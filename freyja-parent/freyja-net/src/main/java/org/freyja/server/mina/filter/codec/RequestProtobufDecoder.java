@@ -45,6 +45,7 @@ public class RequestProtobufDecoder extends CumulativeProtocolDecoder {
 				command.setCmd(cmd);
 				// 得到了消息主体字节数组
 				command.setBytes(body);
+				command.setJson(false);
 				out.write(command);
 				// if (logger.isDebugEnabled()) {
 				// logger.debug("收到请求:{}" + JSON.toJSONString(command));

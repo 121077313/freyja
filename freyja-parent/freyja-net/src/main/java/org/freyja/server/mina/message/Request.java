@@ -23,6 +23,8 @@ public class Request extends Message {
 
 	private byte[] bytes;
 
+	private boolean json;
+
 	public List<Object> getParameters() {
 		return parameters;
 	}
@@ -63,6 +65,14 @@ public class Request extends Message {
 
 	public void setParameter(Object parameter) {
 		this.parameter = parameter;
+	}
+
+	public boolean isJson() {
+		return json;
+	}
+
+	public void setJson(boolean json) {
+		this.json = json;
 	}
 
 }

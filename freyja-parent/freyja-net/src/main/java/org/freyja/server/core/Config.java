@@ -23,4 +23,8 @@ public class Config {
 	/** protobuf 是否需要排序,如果排序,字段会以字段名字的hashcode大小来排序 */
 	@Value("${protobuf_order}")
 	public boolean protobufOrder;
+	
+	
+	@Value("${old_req_json}")
+	public boolean	oldReqJson;
 }
