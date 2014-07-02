@@ -162,13 +162,14 @@ public class Invoker {
 			req = requestInvoker.invoke();
 			if (request.isJson()) {
 
-				try {
-					String s = new String(request.getBytes(), "utf-8");
+//				try {
+//					String s = new String(request.getBytes(), "utf-8");
+//
+//				} catch (UnsupportedEncodingException e) {
+//					e.printStackTrace();
+//				}
 
-					req = JSON.parseObject(request.getBytes(), req.getClass());
-				} catch (UnsupportedEncodingException e) {
-					e.printStackTrace();
-				}
+				req = JSON.parseObject(request.getBytes(), req.getClass());
 			} else {
 				Schema schema = null;
 				if (config.protobufOrder) {
