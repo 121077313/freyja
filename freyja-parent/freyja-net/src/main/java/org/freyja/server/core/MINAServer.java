@@ -49,6 +49,7 @@ public class MINAServer {
 	public void init() throws IOException {
 		bindGameSocket();
 		bindGameWebSocket();
+		bindGameProtobufSocket();
 	}
 
 	/**
@@ -66,17 +67,9 @@ public class MINAServer {
 		ProtocolEncoderAdapter encoder = null;
 		ProtocolDecoderAdapter decoder = null;
 
-		if (config.requestUseProtobuf) {
-			decoder = new RequestProtobufDecoder();
-		} else {// json
-			decoder = new RequestJsonDecoder();
-		}
+		decoder = new RequestJsonDecoder();
 
-		if (config.responseUseProtobuf) {
-			encoder = new ResponseProtobufEncoder(config.protobufOrder);
-		} else {// json
-			encoder = new ResponseJsonEncoder();
-		}
+		encoder = new ResponseJsonEncoder();
 		filterChain.addLast("byteCodecFactory", new ProtocolCodecFilter(
 				encoder, decoder));
 
@@ -136,7 +129,8 @@ public class MINAServer {
 		DefaultIoFilterChainBuilder filterChain = acceptor.getFilterChain();
 
 		filterChain.addLast("byteCodecFactory", new ProtocolCodecFilter(
-				new WebSocketCodecFactory()));
+				new ResponseProtobufEncoder(config.protobufOrder),
+				new RequestProtobufDecoder()));
 
 		// filterChain.addLast("threadPool", new
 		// ExecutorFilter(FILTER_EXECUTOR));

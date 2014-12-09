@@ -11,31 +11,20 @@ public class Config {
 
 	@Value("${socket_port}")
 	public int socketPort;
-	
-	
+
 	@Value("${socket_json_port}")
 	public Integer socketJsonPort;
 
 	@Value("${socket_websocket_port}")
 	public Integer socketWebSocketPort;
-	
+
 	@Value("${socket_protobuf_port}")
 	public Integer socketProtobufPort;
-	
-	
-	/** 请求是否使用protobuf */
-	@Value("${request_use_protobuf}")
-	public boolean requestUseProtobuf;
 
-	/** 响应是否使用protobuf */
-	@Value("${response_use_protobuf}")
-	public boolean responseUseProtobuf;
-	
 	/** protobuf 是否需要排序,如果排序,字段会以字段名字的hashcode大小来排序 */
 	@Value("${protobuf_order}")
 	public boolean protobufOrder;
-	
-	
+
 	@Value("${old_req_json}")
-	public boolean	oldReqJson;
+	public boolean oldReqJson;
 }

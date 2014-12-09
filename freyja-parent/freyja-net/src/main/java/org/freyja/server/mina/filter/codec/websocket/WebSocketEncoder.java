@@ -4,6 +4,7 @@
  */
 package org.freyja.server.mina.filter.codec.websocket;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -65,25 +66,85 @@ public class WebSocketEncoder extends ProtocolEncoderAdapter {
 			bytes = message.toString().getBytes();
 		}
 
-		IoBuffer buf = WebSocketEncoder.buildWSDataFrameBuffer(bytes);
+		// out.write(IoBuffer.wrap("test".getBytes()));
 
+		IoBuffer buf = IoBuffer.wrap(encode(bytes));
+		// IoBuffer buf = WebSocketEncoder.buildWSDataFrameBuffer(bytes);
 		out.write(buf);
+		
 
+//		IoBuffer buffer = IoBuffer.allocate(
+//				bytes.length, false);
+//		buffer.setAutoExpand(true);
+//		buffer.put(bytes);
+//		buffer.flip();
+		
+		
+//		out.write(buffer);
+System.out.println("xiang");
 	}
+	
+	
+	// / 对传入数据进行无掩码转换
+	public static byte[] encode(byte[] msgByte) throws UnsupportedEncodingException {
+		// 掩码开始位置
+		int masking_key_startIndex = 2;
+
+//		byte[] msgByte = msg.getBytes("UTF-8");
+
+		// 计算掩码开始位置
+		if (msgByte.length <= 125) {
+			masking_key_startIndex = 2;
+		} else if (msgByte.length > 65536) {
+			masking_key_startIndex = 10;
+		} else if (msgByte.length > 125) {
+			masking_key_startIndex = 4;
+		}
+
+		// 创建返回数据
+		byte[] result = new byte[msgByte.length + masking_key_startIndex];
+
+		// 开始计算ws-frame
+		// frame-fin + frame-rsv1 + frame-rsv2 + frame-rsv3 + frame-opcode
+		result[0] = (byte) 0x81; // 129
+
+		// frame-masked+frame-payload-length
+		// 从第9个字节开始是 1111101=125,掩码是第3-第6个数据
+		// 从第9个字节开始是 1111110>=126,掩码是第5-第8个数据
+		if (msgByte.length <= 125) {
+			result[1] = (byte) (msgByte.length);
+		} else if (msgByte.length > 65536) {
+			result[1] = 0x7F; // 127
+		} else if (msgByte.length > 125) {
+			result[1] = 0x7E; // 126
+			result[2] = (byte) (msgByte.length >> 8);
+			result[3] = (byte) (msgByte.length % 256);
+		}
+
+		// 将数据编码放到最后
+		for (int i = 0; i < msgByte.length; i++) {
+			result[i + masking_key_startIndex] = msgByte[i];
+		}
+		
+		return result;
+	}
+	
+	
+	
 
 	/** 使用json格式响应转换成字节数组 */
 	public static byte[] toBytesByJson(Response response) {
 
-		if (response.getResult() == null) {
-			IoBuffer buf = IoBuffer.allocate(8);
-			buf.putInt(response.getCmd());
-			buf.putInt(response.getStatus());
-			buf.flip();
-			byte[] bytes = buf.array();
-			buf.clear();
-
-			return bytes;
-		}
+		// if (response.getResult() == null) {
+		// IoBuffer buf = IoBuffer.allocate(8);
+		// buf.putInt(response.getCmd());
+		// buf.putInt(response.getStatus());
+		// buf.flip();
+		// byte[] bytes = buf.array();
+		// buf.clear();
+		//
+		// return bytes;
+		// }
 
 		JSONArray array = new JSONArray();
 
@@ -91,9 +152,17 @@ public class WebSocketEncoder extends ProtocolEncoderAdapter {
 
 		array.add(response.getStatus());
 
-		array.add(response.getResult());
+		if (response.getResult() != null) {
+			array.add(response.getResult());
+		}
 
-		return JSON.toJSONBytes(array);
+		try {
+			return JSON.toJSONString(array).getBytes("utf-8");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		return null;
+		// return JSON.toJSONBytes(array);
 	}
 
 	private static IoBuffer buildWSDataFrameBuffer(byte[] bytes) {

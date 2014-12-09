@@ -44,6 +44,9 @@ public class Request extends Message {
 			logger.error(e.getMessage(), e);
 			AssertCode.error(ServerException.unable_resolve_msg);
 		}
+		if (parameters == null) {
+			parameters = emptyList;
+		}
 	}
 
 	@Override
