@@ -19,7 +19,7 @@ public class Request extends Message {
 	/** 消息参数 */
 	private List<Object> parameters;
 
-	private Object parameter;
+	private Object parameter = emptyList;
 
 	private byte[] bytes;
 
@@ -35,14 +35,14 @@ public class Request extends Message {
 
 	/** 请求字节转化成属性 */
 	public void bodyFromBytes(byte[] bytes) {
+		if (bytes == null) {
+			return;
+		}
 		try {
 			parameters = (List<Object>) JSON.parse(bytes);
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			AssertCode.error(ServerException.unable_resolve_msg);
-		}
-		if (parameters == null) {
-			parameters = emptyList;
 		}
 	}
 

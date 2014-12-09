@@ -2,6 +2,7 @@ package org.freyja.server.core;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -97,10 +98,11 @@ public class Invoker {
 
 		request.setCmdString(methodCache.getCmdString());
 
-		if (!config.oldReqJson) {// req protobuf
+		if (!config.oldReqJson) {// req protobuf,
 			return dispatch(methodCache, session, request);
 		}
-
+		// param is JsonArray
+		
 		request.bodyFromBytes(request.getBytes());
 
 		if (Log.reqLogger.isDebugEnabled()) {
@@ -161,14 +163,6 @@ public class Invoker {
 
 			req = requestInvoker.invoke();
 			if (request.isJson()) {
-
-//				try {
-//					String s = new String(request.getBytes(), "utf-8");
-//
-//				} catch (UnsupportedEncodingException e) {
-//					e.printStackTrace();
-//				}
-
 				req = JSON.parseObject(request.getBytes(), req.getClass());
 			} else {
 				Schema schema = null;
@@ -316,8 +310,6 @@ public class Invoker {
 				bo.setList(list);
 				expressionCache.put(methodCache.getCmd(), bo);
 			} catch (Exception e) {
-				System.out.println();
-				System.out.println(expression.getExpressionString());
 				e.printStackTrace();
 			}
 		}

@@ -11,7 +11,18 @@ public class Config {
 
 	@Value("${socket_port}")
 	public int socketPort;
+	
+	
+	@Value("${socket_json_port}")
+	public Integer socketJsonPort;
 
+	@Value("${socket_websocket_port}")
+	public Integer socketWebSocketPort;
+	
+	@Value("${socket_protobuf_port}")
+	public Integer socketProtobufPort;
+	
+	
 	/** 请求是否使用protobuf */
 	@Value("${request_use_protobuf}")
 	public boolean requestUseProtobuf;

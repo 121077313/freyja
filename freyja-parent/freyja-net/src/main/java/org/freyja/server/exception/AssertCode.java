@@ -40,12 +40,12 @@ public class AssertCode {
 
 	public static void error(int error, String msg) {
 
-		error(error);
-		// if (msg == null) {
-		// error(error);
-		// return;
-		// }
-		// throw new CodeException(error, msg);
+//		error(error);
+		if (msg == null) {
+			error(error);
+			return;
+		}
+		throw new CodeException(error, msg);
 	}
 
 }

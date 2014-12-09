@@ -23,10 +23,11 @@ import org.apache.mina.transport.socket.nio.NioProcessor;
 import org.apache.mina.transport.socket.nio.NioSession;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.freyja.server.mina.ServerHandler;
-import org.freyja.server.mina.filter.codec.RequestJsonDecoder;
-import org.freyja.server.mina.filter.codec.RequestProtobufDecoder;
-import org.freyja.server.mina.filter.codec.ResponseProtobufEncoder;
-import org.freyja.server.mina.filter.codec.ResponseJsonEncoder;
+import org.freyja.server.mina.filter.codec.json.RequestJsonDecoder;
+import org.freyja.server.mina.filter.codec.json.ResponseJsonEncoder;
+import org.freyja.server.mina.filter.codec.protobuf.RequestProtobufDecoder;
+import org.freyja.server.mina.filter.codec.protobuf.ResponseProtobufEncoder;
+import org.freyja.server.mina.filter.codec.websocket.WebSocketCodecFactory;
 import org.freyja.server.thread.NamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +48,7 @@ public class MINAServer {
 	@PostConstruct
 	public void init() throws IOException {
 		bindGameSocket();
+		bindGameWebSocket();
 	}
 
 	/**
@@ -60,22 +62,6 @@ public class MINAServer {
 		acceptor.setBacklog(10000);// 最大连接数量
 		acceptor.getSessionConfig().setAll(getSessionConfig());
 		DefaultIoFilterChainBuilder filterChain = acceptor.getFilterChain();
-
-		// filterChain.addLast("connectionThrottleFilter",
-		// new ConnectionThrottleFilter(1000l, 10000));// 连续请求必须在1000ms以上
-		//
-		// TODO: 关闭请求时间过滤器
-		// filterChain.addLast("attackFilter", new CmdAttackFilter(500l,
-		// 10000));// 连续请求必须在1000ms以上
-
-		// TextLineCodecFactory text = new TextLineCodecFactory(
-		// Charset.forName("UTF-8"), LineDelimiter.UNIX,
-		// LineDelimiter.UNIX);
-		//
-		// text.setDecoderMaxLineLength(Integer.MAX_VALUE);
-		// text.setEncoderMaxLineLength(Integer.MAX_VALUE);
-
-		// ProtocolEncoderAdapter encoder = new ResponseEncoder();
 
 		ProtocolEncoderAdapter encoder = null;
 		ProtocolDecoderAdapter decoder = null;
@@ -135,6 +121,60 @@ public class MINAServer {
 		// mobileAcceptor.bind(new InetSocketAddress(socketProbuffPort));
 		// logger.error("bind main socketProbuffPort:" + socketProbuffPort);
 		//
+
+	}
+	
+	
+	void bindGameProtobufSocket() throws IOException {
+		NioSocketAcceptor acceptor = new NioSocketAcceptor(16);
+		acceptor.setReuseAddress(true);
+		acceptor.setBacklog(10000);// 最大连接数量
+		acceptor.getSessionConfig().setAll(getSessionConfig());
+		DefaultIoFilterChainBuilder filterChain = acceptor.getFilterChain();
+
+		filterChain.addLast("byteCodecFactory", new ProtocolCodecFilter(
+				new WebSocketCodecFactory()));
+
+		// filterChain.addLast("threadPool", new
+		// ExecutorFilter(FILTER_EXECUTOR));
+		filterChain.addLast(
+				"executor",
+				new ExecutorFilter(Executors.newFixedThreadPool(20,
+						new NamedThreadFactory("mina"))));
+
+		acceptor.setHandler(handler);
+
+		acceptor.bind(new InetSocketAddress(config.socketProtobufPort));
+
+		logger.error("bind main protobufSocketPort:{}", config.socketProtobufPort);
+		// probuff
+
+	}
+	
+
+	void bindGameWebSocket() throws IOException {
+		NioSocketAcceptor acceptor = new NioSocketAcceptor(16);
+		acceptor.setReuseAddress(true);
+		acceptor.setBacklog(10000);// 最大连接数量
+		acceptor.getSessionConfig().setAll(getSessionConfig());
+		DefaultIoFilterChainBuilder filterChain = acceptor.getFilterChain();
+
+		filterChain.addLast("byteCodecFactory", new ProtocolCodecFilter(
+				new WebSocketCodecFactory()));
+
+		// filterChain.addLast("threadPool", new
+		// ExecutorFilter(FILTER_EXECUTOR));
+		filterChain.addLast(
+				"executor",
+				new ExecutorFilter(Executors.newFixedThreadPool(20,
+						new NamedThreadFactory("mina"))));
+
+		acceptor.setHandler(handler);
+
+		acceptor.bind(new InetSocketAddress(config.socketWebSocketPort));
+
+		logger.error("bind main websocketPort:{}", config.socketWebSocketPort);
+		// probuff
 
 	}
 
