@@ -17,7 +17,8 @@ public class MemcachedCache implements Cache {
 
 	private final String name;
 
-	final int retryNum = 3;
+	final int retryNum = 2;
+
 	private final MemCachedClient store;
 
 	public MemcachedCache(MemCachedClient store, String name, long expiry) {
@@ -45,14 +46,16 @@ public class MemcachedCache implements Cache {
 
 	@Override
 	public void put(Object key, Object value) {
-		boolean stored = store.set(getKey(key),
-				new MemcacheValueWrapper(value), new Date(expiry));
-		if (!stored) {
+		Date expiryDate = new Date(expiry);
+		String keyString = getKey(key);
 
+		boolean stored = store.set(keyString, new MemcacheValueWrapper(value),
+				expiryDate);
+		if (!stored) {
 			for (int i = 0; i < retryNum; i++) {
 				// 重试
-				stored = store.set(getKey(key),
-						new MemcacheValueWrapper(value), new Date(expiry));
+				stored = store.set(keyString, new MemcacheValueWrapper(value),
+						expiryDate);
 				if (stored) {// 重试成功
 					return;
 				}
@@ -60,7 +63,7 @@ public class MemcachedCache implements Cache {
 
 			if (value instanceof Collection) {
 				throw new RuntimeException("缓存存储失败!key:"
-						+ getKey(key)
+						+ keyString
 						+ ",value:"
 						+ StringUtils.collectionToDelimitedString(
 								(Collection<?>) value, ","));

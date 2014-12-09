@@ -123,9 +123,12 @@ public class MINAServer {
 		//
 
 	}
-	
-	
+
 	void bindGameProtobufSocket() throws IOException {
+		if (config.socketProtobufPort == null) {
+			return;
+		}
+
 		NioSocketAcceptor acceptor = new NioSocketAcceptor(16);
 		acceptor.setReuseAddress(true);
 		acceptor.setBacklog(10000);// 最大连接数量
@@ -146,13 +149,17 @@ public class MINAServer {
 
 		acceptor.bind(new InetSocketAddress(config.socketProtobufPort));
 
-		logger.error("bind main protobufSocketPort:{}", config.socketProtobufPort);
+		logger.error("bind main protobufSocketPort:{}",
+				config.socketProtobufPort);
 		// probuff
 
 	}
-	
 
 	void bindGameWebSocket() throws IOException {
+
+		if (config.socketWebSocketPort == null) {
+			return;
+		}
 		NioSocketAcceptor acceptor = new NioSocketAcceptor(16);
 		acceptor.setReuseAddress(true);
 		acceptor.setBacklog(10000);// 最大连接数量
