@@ -4,13 +4,13 @@ import java.io.Serializable;
 
 public class PersistObj implements Serializable {
 
-	protected boolean serialize = true;
+	protected Boolean serialize;
 
-	public boolean isSerialize() {
+	public Boolean getSerialize() {
 		return serialize;
 	}
 
-	public void setSerialize(boolean serialize) {
+	public void setSerialize(Boolean serialize) {
 		this.serialize = serialize;
 	}
 
