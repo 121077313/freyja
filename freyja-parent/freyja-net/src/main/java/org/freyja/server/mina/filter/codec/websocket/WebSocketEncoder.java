@@ -81,7 +81,7 @@ public class WebSocketEncoder extends ProtocolEncoderAdapter {
 		
 		
 //		out.write(buffer);
-System.out.println("xiang");
+//System.out.println("xiang");
 	}
 	
 	
