@@ -6,6 +6,10 @@ public class PersistObj implements Serializable {
 
 	protected Boolean serialize;
 
+	public boolean isSerialize() {
+		return !(serialize != null && !serialize);
+	}
+
 	public Boolean getSerialize() {
 		return serialize;
 	}
