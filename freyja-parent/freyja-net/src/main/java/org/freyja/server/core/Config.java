@@ -12,9 +12,6 @@ public class Config {
 	@Value("${socket_port}")
 	public int socketPort;
 
-	@Value("${socket_json_port}")
-	public Integer socketJsonPort;
-
 	@Value("${socket_websocket_port}")
 	public Integer socketWebSocketPort;
 
