@@ -102,7 +102,7 @@ public class Invoker {
 			return dispatch(methodCache, session, request);
 		}
 		// param is JsonArray
-		
+
 		request.bodyFromBytes(request.getBytes());
 
 		if (Log.reqLogger.isDebugEnabled()) {
@@ -163,7 +163,15 @@ public class Invoker {
 
 			req = requestInvoker.invoke();
 			if (request.isJson()) {
-				req = JSON.parseObject(request.getBytes(), req.getClass());
+				try {
+					req = JSON.parseObject(request.getBytes(), req.getClass());
+				} catch (Exception e) {
+
+					logger.error("请求字符不是Json格式." + e.getMessage(), e);
+					
+					String str = new String(request.getBytes());
+					logger.error("错误的json格式:{}", str);
+				}
 			} else {
 				Schema schema = null;
 				if (config.protobufOrder) {

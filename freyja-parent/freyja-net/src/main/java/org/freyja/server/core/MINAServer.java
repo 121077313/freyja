@@ -2,38 +2,31 @@ package org.freyja.server.core;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
 
 import org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder;
-import org.apache.mina.core.service.SimpleIoProcessorPool;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.codec.ProtocolDecoderAdapter;
 import org.apache.mina.filter.codec.ProtocolEncoderAdapter;
 import org.apache.mina.filter.executor.ExecutorFilter;
-import org.apache.mina.filter.executor.OrderedThreadPoolExecutor;
 import org.apache.mina.transport.socket.DefaultSocketSessionConfig;
 import org.apache.mina.transport.socket.SocketSessionConfig;
-import org.apache.mina.transport.socket.nio.NioProcessor;
-import org.apache.mina.transport.socket.nio.NioSession;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.freyja.server.mina.ServerHandler;
 import org.freyja.server.mina.filter.codec.json.RequestJsonDecoder;
 import org.freyja.server.mina.filter.codec.json.ResponseJsonEncoder;
 import org.freyja.server.mina.filter.codec.protobuf.RequestProtobufDecoder;
 import org.freyja.server.mina.filter.codec.protobuf.ResponseProtobufEncoder;
-import org.freyja.server.mina.filter.codec.websocket.WebSocketCodecFactory;
+import org.freyja.server.mina.filter.codec.qq.RequestTWGJsonDecoder;
+import org.freyja.server.mina.filter.codec.qq.ResponseTWGJsonEncoder;
+import org.freyja.server.mina.filter.codec.websocket.WebSocketDecoder;
+import org.freyja.server.mina.filter.codec.websocket.WebSocketEncoder;
 import org.freyja.server.thread.NamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 
 public class MINAServer {
 
@@ -47,9 +40,53 @@ public class MINAServer {
 
 	@PostConstruct
 	public void init() throws IOException {
+
 		bindGameSocket();
+		bindTWGSocket();
 		bindGameWebSocket();
 		bindGameProtobufSocket();
+
+	}
+
+	/**
+	 * 绑定腾讯游戏服务器
+	 * 
+	 * @throws IOException
+	 */
+	private void bindTWGSocket() throws IOException {
+		int twgSocketPort = 0;
+		try {
+			twgSocketPort = Integer.parseInt(config.TWGSocketSocketPort);
+		} catch (Exception e) {
+		}
+
+		if (twgSocketPort == 0) {
+			return;
+		}
+
+		NioSocketAcceptor acceptor = new NioSocketAcceptor(16);
+		acceptor.setReuseAddress(true);
+		acceptor.setBacklog(10000);// 最大连接数量
+		acceptor.getSessionConfig().setAll(getSessionConfig());
+		DefaultIoFilterChainBuilder filterChain = acceptor.getFilterChain();
+
+		filterChain.addLast("byteCodecFactory", new ProtocolCodecFilter(
+				new ResponseTWGJsonEncoder(), new RequestTWGJsonDecoder()));
+
+		// filterChain.addLast("threadPool", new
+		// ExecutorFilter(FILTER_EXECUTOR));
+		filterChain.addLast(
+				"executor",
+				new ExecutorFilter(Executors.newFixedThreadPool(20,
+						new NamedThreadFactory("mina"))));
+
+		acceptor.setHandler(handler);
+
+		acceptor.bind(new InetSocketAddress(twgSocketPort));
+
+		logger.error("bind main twgSocketPort:{}", twgSocketPort);
+		// probuff
+
 	}
 
 	/**
@@ -58,6 +95,13 @@ public class MINAServer {
 	 * @throws IOException
 	 */
 	private void bindGameSocket() throws IOException {
+
+		try {
+			Integer.parseInt(config.socketJsonPort);
+		} catch (Exception e) {
+			return;
+		}
+
 		NioSocketAcceptor acceptor = new NioSocketAcceptor(16);
 		acceptor.setReuseAddress(true);
 		acceptor.setBacklog(10000);// 最大连接数量
@@ -82,9 +126,10 @@ public class MINAServer {
 
 		acceptor.setHandler(handler);
 
-		acceptor.bind(new InetSocketAddress(config.socketPort));
+		acceptor.bind(new InetSocketAddress(Integer
+				.parseInt(config.socketJsonPort)));
 
-		logger.error("bind main socketPort:{}", config.socketPort);
+		logger.error("bind main socketPort:{}", config.socketJsonPort);
 		// probuff
 
 		// NioSocketAcceptor mobileAcceptor = new NioSocketAcceptor();
@@ -118,7 +163,10 @@ public class MINAServer {
 	}
 
 	void bindGameProtobufSocket() throws IOException {
-		if (config.socketProtobufPort == null) {
+
+		try {
+			Integer.parseInt(config.socketProtobufPort);
+		} catch (Exception e) {
 			return;
 		}
 
@@ -141,7 +189,8 @@ public class MINAServer {
 
 		acceptor.setHandler(handler);
 
-		acceptor.bind(new InetSocketAddress(config.socketProtobufPort));
+		acceptor.bind(new InetSocketAddress(Integer
+				.parseInt(config.socketProtobufPort)));
 
 		logger.error("bind main protobufSocketPort:{}",
 				config.socketProtobufPort);
@@ -151,9 +200,12 @@ public class MINAServer {
 
 	void bindGameWebSocket() throws IOException {
 
-		if (config.socketWebSocketPort == null) {
+		try {
+			Integer.parseInt(config.socketWebSocketPort);
+		} catch (Exception e) {
 			return;
 		}
+
 		NioSocketAcceptor acceptor = new NioSocketAcceptor(16);
 		acceptor.setReuseAddress(true);
 		acceptor.setBacklog(10000);// 最大连接数量
@@ -161,7 +213,7 @@ public class MINAServer {
 		DefaultIoFilterChainBuilder filterChain = acceptor.getFilterChain();
 
 		filterChain.addLast("byteCodecFactory", new ProtocolCodecFilter(
-				new WebSocketCodecFactory()));
+				new WebSocketEncoder(), new WebSocketDecoder()));
 
 		// filterChain.addLast("threadPool", new
 		// ExecutorFilter(FILTER_EXECUTOR));
@@ -172,7 +224,8 @@ public class MINAServer {
 
 		acceptor.setHandler(handler);
 
-		acceptor.bind(new InetSocketAddress(config.socketWebSocketPort));
+		acceptor.bind(new InetSocketAddress(Integer
+				.parseInt(config.socketWebSocketPort)));
 
 		logger.error("bind main websocketPort:{}", config.socketWebSocketPort);
 		// probuff

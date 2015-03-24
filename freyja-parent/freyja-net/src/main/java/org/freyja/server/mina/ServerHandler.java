@@ -200,17 +200,14 @@ public class ServerHandler extends IoHandlerAdapter {
 		return sb.toString();
 	}
 
-	// private final static String xmls =
-	// "<cross-domain-policy><allow-access-from domain='*' to-ports='*'/></cross-domain-policy>\0";
+
+	private final static String xmls = "<cross-domain-policy><allow-access-from domain='*' to-ports='*'/></cross-domain-policy>\0";
 
 	@Override
 	public void sessionOpened(IoSession session) throws Exception {
-
-		// TODO: 本地测试,不需要crossdomain.xml文件
-		// session.write(xmls);
+//		session.write(xmls);
 		logger.debug("建立了新的连接{}, 来自：{}", session.getId(),
 				session.getRemoteAddress());
-		// System.out.println("opend");
 	}
 
 	@Override

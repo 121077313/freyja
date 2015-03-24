@@ -70,12 +70,18 @@ public class WebSocketDecoder extends CumulativeProtocolDecoder {
 		}
 
 		byte[] bytes = resultBuffer.array();
+		// String s = new String(bytes, "utf-8");
+		// System.out.println(s);
 
 		JSONArray array = JSON.parseObject(bytes, JSONArray.class);
 
 		Integer cmd = (Integer) array.get(0);
-
-		JSONArray param = array.getJSONArray(1);
+		JSONArray param = null;
+		if (array.size() > 1) {
+			param = array.getJSONArray(1);
+		} else {
+			param = new JSONArray();
+		}
 
 		Request command = new Request();
 		command.setCmd(cmd);
