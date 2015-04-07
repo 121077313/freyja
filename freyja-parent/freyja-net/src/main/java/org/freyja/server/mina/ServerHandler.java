@@ -54,7 +54,7 @@ public class ServerHandler extends IoHandlerAdapter {
 
 	/** 方法线程池 */
 	public static ExecutorService methodScheduler = Executors
-			.newFixedThreadPool(200, new NamedThreadFactory("method"));
+			.newFixedThreadPool(100, new NamedThreadFactory("method"));
 
 	// Queue<MessageQueue> queue = new ConcurrentLinkedQueue<MessageQueue>();
 
@@ -70,6 +70,11 @@ public class ServerHandler extends IoHandlerAdapter {
 
 				while (true) {
 					if (queues.isEmpty()) {
+						try {
+							Thread.sleep(500);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
 						continue;
 					}
 
@@ -91,11 +96,6 @@ public class ServerHandler extends IoHandlerAdapter {
 								}
 							}
 						});
-					}
-					try {
-						Thread.sleep(500);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
 					}
 				}
 			}

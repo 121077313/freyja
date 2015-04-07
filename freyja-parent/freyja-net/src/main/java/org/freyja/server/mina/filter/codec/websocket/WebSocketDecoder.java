@@ -70,8 +70,8 @@ public class WebSocketDecoder extends CumulativeProtocolDecoder {
 		}
 
 		byte[] bytes = resultBuffer.array();
-		// String s = new String(bytes, "utf-8");
-		// System.out.println(s);
+//		 String s = new String(bytes, "utf-8");
+//		 System.out.println(s);
 
 		JSONArray array = JSON.parseObject(bytes, JSONArray.class);
 
