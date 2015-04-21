@@ -168,7 +168,7 @@ public class Invoker {
 				} catch (Exception e) {
 
 					logger.error("请求字符不是Json格式." + e.getMessage(), e);
-					
+
 					String str = new String(request.getBytes());
 					logger.error("错误的json格式:{}", str);
 				}

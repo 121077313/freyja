@@ -36,7 +36,7 @@ public class RequestTWGJsonDecoder extends CumulativeProtocolDecoder {
 			in.get(array);
 			String msg = new String(array, "utf-8");
 
-//			logger.debug(msg);
+			logger.debug(msg);
 //			System.out.println(msg);
 
 			if (msg.indexOf("policy-file-request") != -1) {// 安全沙箱

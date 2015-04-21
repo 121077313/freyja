@@ -54,13 +54,13 @@ public class ServerHandler extends IoHandlerAdapter {
 
 	/** 方法线程池 */
 	public static ExecutorService methodScheduler = Executors
-			.newFixedThreadPool(100, new NamedThreadFactory("method"));
+			.newFixedThreadPool(50, new NamedThreadFactory("method"));
 
 	// Queue<MessageQueue> queue = new ConcurrentLinkedQueue<MessageQueue>();
 
 	Map<Integer, Queue<MessageQueue>> queues = new ConcurrentHashMap<Integer, Queue<MessageQueue>>();
 
-	@PostConstruct
+//	@PostConstruct
 	public void init() {
 		// 处理消息
 		methodScheduler.submit(new Runnable() {
@@ -71,7 +71,7 @@ public class ServerHandler extends IoHandlerAdapter {
 				while (true) {
 					if (queues.isEmpty()) {
 						try {
-							Thread.sleep(500);
+							Thread.sleep(300);
 						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}
@@ -165,7 +165,7 @@ public class ServerHandler extends IoHandlerAdapter {
 
 		Integer uid = (Integer) session.getAttribute("uid");
 
-		if (uid == null) {// 直接执行
+		if (uid == null||uid!=null) {// 直接执行
 			methodScheduler.submit(new Runnable() {
 				@Override
 				public void run() {

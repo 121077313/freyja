@@ -36,8 +36,9 @@ public class CommonDaoImpl implements ICommonDao {
 
 	@Override
 	public <T> List<T> find(Class<T> clazz, String where, Object... values) {
-		List<T> list = freyjaTemplate.query("select * from " + clazz.getSimpleName()
-				+ " where " + where, values);
+		List<T> list = freyjaTemplate.query(
+				"select * from " + clazz.getSimpleName() + " where " + where,
+				values);
 		return list;
 	}
 
@@ -51,8 +52,11 @@ public class CommonDaoImpl implements ICommonDao {
 	}
 
 	@Override
-	public long count(String hql, Object... args) {
+	public Long count(String hql, Object... args) {
 		Object obj = this.get(hql, args);
+		if (obj == null) {
+			return 0l;
+		}
 		return (Long) obj;
 	}
 

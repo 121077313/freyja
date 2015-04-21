@@ -148,7 +148,6 @@ public class SessionManager implements SessionAware {
 		oldSession.setAttribute("sys.close");// 异步的
 		oldSession.close(true);
 
-//		System.out.println("close2:" + uid);
 		for (SessionListener listener : listenerInitialization.sessionListeners) {
 			listener.onSessionClose(uid);
 		}

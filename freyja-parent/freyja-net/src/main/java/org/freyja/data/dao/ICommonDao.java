@@ -35,7 +35,7 @@ public interface ICommonDao extends FreyjaJdbcOperations {
 	 *            或:count(select count(*) from User where level > ?)
 	 * 
 	 */
-	long count(String hql, Object... args);
+	Long count(String hql, Object... args);
 
 	/**
 	 * 封装 get 方法，根据hql查询总数
