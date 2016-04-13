@@ -2,7 +2,6 @@ package spring;
 
 import java.lang.reflect.Method;
 
-import org.junit.runner.RunWith;
 import org.springframework.core.LocalVariableTableParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.expression.Expression;
