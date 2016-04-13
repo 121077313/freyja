@@ -22,6 +22,9 @@
 
 
 
+
+
+
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-jdbc</artifactId>
@@ -47,11 +50,17 @@
 			<version>2.2.2</version>
 		</dependency>
 
+
+
 		<dependency>
 			<groupId>com.alibaba.druid</groupId>
 			<artifactId>druid-mapping</artifactId>
 			<version>0.2.10</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/libs/druid-mapping-0.2.10.jar</systemPath>
 		</dependency>
+
+
 
 	</dependencies>
 
