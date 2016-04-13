@@ -87,10 +87,5 @@
 		<module>freyja-net</module>
 	</modules>
 
-	<repositories>
-		<repository>
-			<id>alibabatech</id>
-			<url>http://code.alibabatech.com/mvn/releases</url>
-		</repository>
-	</repositories>
+
 </project>
