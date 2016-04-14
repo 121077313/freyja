@@ -86,6 +86,14 @@
 		<module>freyja-jdbc</module>
 		<module>freyja-net</module>
 	</modules>
-
+	
+	
+	<repositories>
+		<repository>
+			<id>central</id>
+			<name>Central Repository</name>
+			<url>http://central.maven.org/maven2/com/alibaba/druid/</url>
+		</repository>
+	</repositories>
 
 </project>

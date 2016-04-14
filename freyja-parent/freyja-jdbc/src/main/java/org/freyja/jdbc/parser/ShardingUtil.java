@@ -205,7 +205,7 @@ public class ShardingUtil {
 				new MappingContext());
 
 		String tableName = stmt.getTableName().getSimleName();
-
+//		String tableName = stmt.getTableName().getSimpleName();
 		MappingVisitor visitor = engine.createMappingVisitor(Collections
 				.emptyList());
 		stmt.accept(visitor);
@@ -231,7 +231,7 @@ public class ShardingUtil {
 				new MappingContext());
 
 		String tableName = stmt.getTableName().getSimleName();
-
+//		String tableName = stmt.getTableName().getSimpleName();
 		MappingVisitor visitor = engine.createMappingVisitor(Collections
 				.emptyList());
 		stmt.accept(visitor);
@@ -254,7 +254,9 @@ public class ShardingUtil {
 		SQLInsertStatement stmt = engine.explainToInsertSQLObject(sql,
 				new MappingContext());
 
-		String tableName = stmt.getTableName().getSimleName();
+		String tableName = stmt.getTableName().getSimleName();		
+//		String tableName = stmt.getTableName().getSimpleName();
+		
 		MappingVisitor visitor = engine.createMappingVisitor();
 		stmt.accept(visitor);
 		visitor.afterResolve();
